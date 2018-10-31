@@ -2,9 +2,12 @@ package main
 
 import (
     "database/sql"
+    "encoding/json"
     "fmt"
+    "github.com/gin-gonic/gin"
     _ "github.com/lib/pq"
     "os"
+    "strconv"
 )
 
 type DataType struct {
@@ -40,8 +43,10 @@ func connStr() string {
 
 func connection() *sql.DB {
     db, err := sql.Open("postgres", connStr())
-    if err != nil {
-        panic(err)
+    {
+        if err != nil {
+            panic(err)
+        }
     }
 
     return db
@@ -57,14 +62,18 @@ func channels(serial string, limit uint64) []DataType {
     db := connection()
     defer func() {
         err := db.Close()
-        if err != nil {
-            panic(err)
+        {
+            if err != nil {
+                panic(err)
+            }
         }
     }()
 
     row, err := db.Query(sqlStr, serial, limit)
-    if err != nil {
-        panic(err)
+    {
+        if err != nil {
+            panic(err)
+        }
     }
 
     var serials []DataType
@@ -75,9 +84,11 @@ func channels(serial string, limit uint64) []DataType {
             subs uint64
         )
 
-        err = row.Scan(&serial, &time, &subs)
-        if err != nil {
-            panic(err)
+        err := row.Scan(&serial, &time, &subs)
+        {
+            if err != nil {
+                panic(err)
+            }
         }
 
         data := DataType{
@@ -92,13 +103,51 @@ func channels(serial string, limit uint64) []DataType {
     return serials
 }
 
-func main() {
-    serial := "UC-lHJZR3Gqxm24_Vd_AJ5Yw"
-    var limit uint64 = 100
-
+func jsonFromSerial(serial string, limit uint64) []byte {
     chans := channels(serial, limit)
-    for i := range chans {
-        c := chans[i]
-        fmt.Println(c)
+    jsonData := JsonType{
+        Serials: chans,
+    }
+
+    jsonStr, err := json.Marshal(jsonData)
+    {
+        if err != nil {
+            panic(err)
+        }
+    }
+
+    return jsonStr
+}
+
+func main() {
+    {
+        r := gin.Default()
+        r.GET("/:serial/:limit", func(c *gin.Context) {
+            serial := c.Param("serial")
+            count, err := strconv.ParseUint(c.Param("limit"), 10, 64)
+            {
+                if err != nil {
+                    panic(err)
+                }
+            }
+
+            jsonData := jsonFromSerial(serial, count)
+            {
+                writeCount, err := c.Writer.Write(jsonData)
+                if err != nil {
+                    panic(err)
+                }
+
+                fmt.Println("Wrote", writeCount, "bytes")
+            }
+
+        })
+
+        {
+            err := r.Run()
+            if err != nil {
+                panic(err)
+            }
+        }
     }
 }
