@@ -129,6 +129,10 @@ func main() {
                 if err != nil {
                     panic(err)
                 }
+
+                if count > 1000 {
+                    count = 1000
+                }
             }
 
             jsonData := jsonFromSerial(serial, count)
