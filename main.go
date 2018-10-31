@@ -60,6 +60,13 @@ func channels(serial string, limit uint64) []DataType {
               ORDER BY time desc
               LIMIT $2`
     db := connection()
+    {
+        _, err := db.Exec("SET TIME ZONE 'US/Pacific'")
+        if err != nil {
+            panic(err)
+        }
+    }
+
     defer func() {
         err := db.Close()
         {
