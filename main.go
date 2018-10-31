@@ -148,6 +148,8 @@ func main() {
                 fmt.Println("Wrote", writeCount, "bytes")
             }
 
+            c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+            c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
         })
 
         {
