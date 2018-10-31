@@ -1,11 +1,13 @@
 package main
 
 import (
+    "bytes"
     "database/sql"
     "encoding/json"
     "fmt"
     "github.com/gin-gonic/gin"
     _ "github.com/lib/pq"
+    "net/http"
     "os"
     "strconv"
 )
@@ -139,17 +141,13 @@ func main() {
             }
 
             jsonData := jsonFromSerial(serial, count)
-            {
-                writeCount, err := c.Writer.Write(jsonData)
-                if err != nil {
-                    panic(err)
-                }
-
-                fmt.Println("Wrote", writeCount, "bytes")
+            extraHeaders := map[string]string{
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Headers": "Origin, X-Requested-With, Content-Type, Accept",
             }
 
-            c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-            c.Writer.Header().Set("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept")
+            contentLen := int64(len(jsonData))
+            c.DataFromReader(http.StatusOK, contentLen, "application/json", bytes.NewReader(jsonData), extraHeaders)
         })
 
         {
