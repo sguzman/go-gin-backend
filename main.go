@@ -76,7 +76,7 @@ func channels(serial string, limit uint64) []DataType {
         }
     }
 
-    var serials []DataType
+    serials := make([]DataType, 0)
     for row.Next() {
         var (
             serial string
